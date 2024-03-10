@@ -1,6 +1,10 @@
 import React, {useEffect, useRef, useState} from 'react'
 import md5 from 'crypto-js/md5'
-import './App.scss'
+
+import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft'
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight'
+
+import {Button, ButtonGroup, Divider, Input, LinearProgress, Option, Select, Stack, Table, Typography} from "@mui/joy"
 
 type Product = {
   id: string,
@@ -75,7 +79,7 @@ function App() {
   const [filters, setFilters] = useState([])
 
   const searchRef = useRef<HTMLInputElement>(null)
-  const filterRef = useRef<HTMLSelectElement>(null)
+  const filterRef = useRef('product')
 
   useEffect(() => {
     fetchData({
@@ -123,10 +127,10 @@ function App() {
 
   function getProductIds() {
     setIsLoading(true)
-    const searchValue = searchRef.current?.value
+    const searchValue = searchRef.current?.getElementsByTagName("input")[1].value
     if (searchValue) {
       if (isSearch) {
-        const filter = filterRef.current?.value
+        const filter = filterRef.current
         if (!filter) return
 
         fetchData({
@@ -149,65 +153,107 @@ function App() {
     setIsSearch(false)
   }
 
-  function handleSelectChange(e: React.ChangeEvent<HTMLSelectElement>) {
-    const search = searchRef.current
+  function handleSelectChange(e: React.SyntheticEvent | null, filterValue: string | null) {
+    const search = searchRef.current?.getElementsByTagName("input")[1]
     if (!search) return
 
-    const value = e.target.value
-    search.setAttribute('type', value === 'price' ? 'number' : 'search')
-    value === 'price'
+    search.setAttribute('type', filterValue === 'price' ? 'number' : 'search')
+    filterValue === 'price'
       ? search.setAttribute('min', '0')
       : search.removeAttribute('min')
 
     search.value = ''
+    filterRef.current = filterValue || ''
   }
 
   return (
-    <div className="container">
+    <Stack spacing={2} maxWidth={1024} mx="auto" my={2}>
       {!!filters.length && <>
-        <form onSubmit={e => e.preventDefault()} className="search">
-          <select ref={filterRef} onChange={e => handleSelectChange(e)}>
-            {filters.map((option: string) => {
-              return <option key={option}>{option}</option>
-            })}
-          </select>
-          <input ref={searchRef} type="search" />
-          <button onClick={() => setIsSearch(true)} type="submit">Поиск</button>
+        <form onSubmit={e => e.preventDefault()}>
+          <Input
+            ref={searchRef}
+            placeholder="Поиск"
+            startDecorator={
+              <>
+                <Select
+                  variant="plain"
+                  defaultValue={'product'}
+                  onChange={handleSelectChange}
+                  slotProps={{
+                    listbox: {
+                      variant: 'outlined',
+                    },
+                  }}
+                  sx={{ml: -1.5, '&:hover': {bgcolor: 'transparent'}}}
+                >
+                  {filters.map((option: string) => {
+                    return <Option key={option} value={option}>{option}</Option>
+                  })}
+                </Select>
+                <Divider orientation="vertical"></Divider>
+              </>
+            }
+            endDecorator={
+              <Button
+                onClick={() => setIsSearch(true)}
+                type="submit"
+                sx={{borderTopLeftRadius: 0, borderBottomLeftRadius: 0}}
+              >Поиск</Button>
+            }
+            sx={{'--Input-decoratorChildHeight': '40px'}}
+          ></Input>
         </form>
       </>}
-      <h1>{searchRef.current?.value ? 'Результаты поиска' : 'Все товары'}</h1>
-      <div className="pagination">
-        <button onClick={() => setCurrentPage(page => page - 1)} disabled={isLoading || currentPage <= 0}>Назад</button>
-        <button onClick={() => setCurrentPage(page => page + 1)} disabled={isLoading || isLastPage}>Вперёд</button>
-      </div>
-      {isLoading
-        ? <p>Загрузка...</p>
-        : !products.length
-          ? <p>Товаров не найдено</p>
-          : <>
-            <table>
-              <thead>
-              <tr>
-                <th>Наименование</th>
-                <th>Цена</th>
-                <th>Бренд</th>
-                <th>ID</th>
-              </tr>
-              </thead>
-              <tbody>
-              {products.map(product => {
-                return <tr key={product.id}>
-                  <td>{product.product}</td>
-                  <td>{rubFormatter.format(product.price)}</td>
-                  <td>{product.brand}</td>
-                  <td>{product.id}</td>
+
+      <Typography
+        level="h1">{searchRef.current?.getElementsByTagName("input")[1].value ? 'Результаты поиска' : 'Все товары'}</Typography>
+
+      <ButtonGroup aria-label="outlined primary button group">
+        <Button
+          onClick={() => setCurrentPage(page => page - 1)}
+          disabled={isLoading || currentPage <= 0}
+          startDecorator={<KeyboardArrowLeft />}
+        >
+          Назад
+        </Button>
+        <Button
+          onClick={() => setCurrentPage(page => page + 1)}
+          disabled={isLoading || isLastPage}
+          endDecorator={<KeyboardArrowRight />}
+        >
+          Вперёд
+        </Button>
+      </ButtonGroup>
+
+      {
+        isLoading
+          ? <LinearProgress />
+          : !products.length
+            ? <Typography>Товаров не найдено</Typography>
+            : <>
+              <Table stripe="even" stickyHeader>
+                <thead>
+                <tr>
+                  <th>Наименование</th>
+                  <th>Цена</th>
+                  <th>Бренд</th>
+                  <th>ID</th>
                 </tr>
-              })}
-              </tbody>
-            </table>
-          </>
+                </thead>
+                <tbody>
+                {products.map(product => {
+                  return <tr key={product.id}>
+                    <td>{product.product}</td>
+                    <td>{rubFormatter.format(product.price)}</td>
+                    <td>{product.brand}</td>
+                    <td>{product.id}</td>
+                  </tr>
+                })}
+                </tbody>
+              </Table>
+            </>
       }
-    </div>
+    </Stack>
   )
 }
 
