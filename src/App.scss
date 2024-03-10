@@ -1,0 +1,34 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  max-width: 1024px;
+  margin: 0 auto;
+}
+
+.search {
+  display: flex;
+  width: 100%;
+  height: 64px;
+  border-bottom: 1px solid #ccc;
+
+  input {
+    flex-grow: 1;
+  }
+}
+
+.pagination {
+  display: flex;
+  //justify-content: space-between;
+}
+
+table {
+  width: 100%;
+  text-align: left;
+
+  border: solid 1px #ccc;
+  border-collapse: collapse;
+  td, th {
+    padding: 8px;
+    border: solid 1px #ccc;
+  }
+}
